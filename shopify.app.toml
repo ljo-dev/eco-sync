@@ -2,30 +2,30 @@
 
 client_id = "ba734ca3236f8ad7837ce26dfc08886c"
 name = "EcoSync"
-application_url = "https://example.com"
+application_url = "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app"
 embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-04"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
 
   [[webhooks.subscriptions]]
   topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
 
   [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
   topics = [ "refunds/create" ]
   uri = "/webhooks/returns"
 
 [access_scopes]
+# Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "read_themes,write_themes,read_products,write_products,read_orders,write_orders,read_metaobjects,write_metaobjects,read_returns"
 
 [auth]
-redirect_urls = [ "https://example.com/api/auth" ]
+redirect_urls = [ "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app/auth/callback", "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app/auth/shopify/callback", "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app/api/auth/callback" ]
