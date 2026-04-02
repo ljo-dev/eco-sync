@@ -1,5 +1,3 @@
 {
-  "outputFileTracingIncludes": {
-    "**/*": ["./node_modules/.prisma/**/*", "./node_modules/@prisma/client/**/*"]
-  }
+  "framework": "remix"
 }
