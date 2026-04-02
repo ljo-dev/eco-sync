@@ -1,0 +1,12 @@
+{
+  "dashboard": {
+    "title": "EcoSync Dashboard",
+    "scannerTitle": "Ghost Code Scanner",
+    "scannerDesc": "Scans your theme for old app remnants and unnecessary ScriptTags. This helps your store comply with the latest 'Built for Shopify' performance standards.",
+    "scanButton": "Scan Theme",
+    "scanError": "An error occurred during the scan: ",
+    "scanFound": "Ghost code found",
+    "files": "files",
+    "scanClean": "No ghost code detected! Your theme is clean."
+  }
+}

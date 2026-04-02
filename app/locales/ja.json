@@ -1,0 +1,12 @@
+{
+  "dashboard": {
+    "title": "EcoSync ダッシュボード",
+    "scannerTitle": "ゴーストコードスキャナー",
+    "scannerDesc": "古いアプリの残骸や不要なScriptTag（ゴーストコード）をテーマからスキャンし、検知します。これにより、最新の「Built for Shopify」パフォーマンス基準にストアを準拠させることができます。",
+    "scanButton": "テーマをスキャンする",
+    "scanError": "スキャン中にエラーが発生しました: ",
+    "scanFound": "ゴーストコードが見つかりました",
+    "files": "ファイル",
+    "scanClean": "ゴーストコードは検出されませんでした！テーマは非常にクリーンです。"
+  }
+}

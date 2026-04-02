@@ -1,0 +1,122 @@
+{% comment %}
+  EcoSync — DPPバッジ アプリブロック
+  商品ページにDigital Product Passportの情報を表示する
+  Theme App Extension (TAE) - ScriptTag不使用
+{% endcomment %}
+
+{% assign dpp_ref = product.metafields.ecosync_dpp.passport_ref.value %}
+
+{% if dpp_ref != blank %}
+  {% assign dpp = dpp_ref %}
+
+  <div class="ecosync-dpp-badge" id="ecosync-dpp-{{ product.id }}">
+    <div class="ecosync-dpp-badge__header">
+      <span class="ecosync-dpp-badge__icon">🌿</span>
+      <span class="ecosync-dpp-badge__title">
+        {{ block.settings.badge_title | default: 'デジタル製品パスポート' }}
+      </span>
+      {% if block.settings.show_eu_logo %}
+        <span class="ecosync-dpp-badge__eu-label">EU ESPR準拠</span>
+      {% endif %}
+    </div>
+
+    <div class="ecosync-dpp-badge__body">
+      {% if dpp.fields.co2_emission_kg != blank %}
+        <div class="ecosync-dpp-badge__item">
+          <span class="ecosync-dpp-badge__label">CO₂排出量</span>
+          <span class="ecosync-dpp-badge__value">{{ dpp.fields.co2_emission_kg.value | append: ' kg' }}</span>
+        </div>
+      {% endif %}
+
+      {% if dpp.fields.recyclability != blank %}
+        {% assign recyclability = dpp.fields.recyclability.value %}
+        <div class="ecosync-dpp-badge__item">
+          <span class="ecosync-dpp-badge__label">リサイクル可能性</span>
+          <span class="ecosync-dpp-badge__value ecosync-dpp-badge__value--{{ recyclability }}">
+            {% case recyclability %}
+              {% when 'high' %}高
+              {% when 'medium' %}中
+              {% when 'low' %}低
+              {% else %}不可
+            {% endcase %}
+          </span>
+        </div>
+      {% endif %}
+
+      {% if dpp.fields.manufacturing_country != blank %}
+        <div class="ecosync-dpp-badge__item">
+          <span class="ecosync-dpp-badge__label">製造国</span>
+          <span class="ecosync-dpp-badge__value">{{ dpp.fields.manufacturing_country.value }}</span>
+        </div>
+      {% endif %}
+
+      {% if dpp.fields.certifications != blank %}
+        {% assign certs = dpp.fields.certifications.value | parse_json %}
+        {% if certs.size > 0 %}
+          <div class="ecosync-dpp-badge__item">
+            <span class="ecosync-dpp-badge__label">認証</span>
+            <span class="ecosync-dpp-badge__value">
+              {% for cert in certs %}
+                <span class="ecosync-dpp-badge__cert">{{ cert }}</span>
+              {% endfor %}
+            </span>
+          </div>
+        {% endif %}
+      {% endif %}
+
+      {% if dpp.fields.warranty_years != blank %}
+        <div class="ecosync-dpp-badge__item">
+          <span class="ecosync-dpp-badge__label">保証期間</span>
+          <span class="ecosync-dpp-badge__value">{{ dpp.fields.warranty_years.value }}年</span>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if block.settings.show_passport_id and dpp.fields.product_passport_id != blank %}
+      <div class="ecosync-dpp-badge__footer">
+        <span class="ecosync-dpp-badge__passport-id">
+          DPP ID: {{ dpp.fields.product_passport_id.value }}
+        </span>
+      </div>
+    {% endif %}
+  </div>
+
+{% else %}
+  {% if request.design_mode %}
+    <div class="ecosync-dpp-badge ecosync-dpp-badge--placeholder">
+      <p>DPPデータが未設定です。EcoSyncアプリから設定してください。</p>
+    </div>
+  {% endif %}
+{% endif %}
+
+{% schema %}
+{
+  "name": "EcoSync DPPバッジ",
+  "target": "section",
+  "settings": [
+    {
+      "type": "text",
+      "id": "badge_title",
+      "label": "バッジタイトル",
+      "default": "デジタル製品パスポート"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_eu_logo",
+      "label": "EU ESPR準拠ラベルを表示",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_passport_id",
+      "label": "パスポートIDを表示",
+      "default": false
+    }
+  ],
+  "presets": [
+    {
+      "name": "EcoSync DPPバッジ"
+    }
+  ]
+}
+{% endschema %}

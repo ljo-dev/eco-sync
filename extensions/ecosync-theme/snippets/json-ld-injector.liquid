@@ -1,0 +1,77 @@
+{% comment %}
+  EcoSync — JSON-LD インジェクタースニペット
+  商品ページのGEO最適化済み構造化データをheadに注入する
+  使用方法: {% render 'ecosync-json-ld-injector' %}
+{% endcomment %}
+
+{% if product %}
+  {% assign dpp_ref = product.metafields.ecosync_dpp.passport_ref.value %}
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "@id": "{{ shop.permanent_domain | prepend: 'https://' }}/products/{{ product.handle }}",
+    "name": {{ product.title | json }},
+    "description": {{ product.description | strip_html | truncate: 500 | json }},
+    "url": "{{ shop.permanent_domain | prepend: 'https://' }}/products/{{ product.handle }}",
+    "brand": {
+      "@type": "Brand",
+      "name": {{ product.vendor | json }}
+    },
+    "category": {{ product.type | json }},
+    "keywords": {{ product.tags | join: ', ' | json }},
+    {% if product.featured_image %}
+    "image": {
+      "@type": "ImageObject",
+      "url": {{ product.featured_image | image_url: width: 1200 | json }},
+      "description": {{ product.featured_image.alt | default: product.title | json }}
+    },
+    {% endif %}
+    "offers": {
+      "@type": "AggregateOffer",
+      "priceCurrency": {{ cart.currency.iso_code | json }},
+      "lowPrice": {{ product.price_min | money_without_currency | json }},
+      "highPrice": {{ product.price_max | money_without_currency | json }},
+      "offerCount": {{ product.variants.size }},
+      "offers": [
+        {% for variant in product.variants %}
+        {
+          "@type": "Offer",
+          "sku": {{ variant.sku | default: variant.id | json }},
+          "name": {{ variant.title | json }},
+          "price": {{ variant.price | money_without_currency | json }},
+          "priceCurrency": {{ cart.currency.iso_code | json }},
+          "availability": {% if variant.available %}"https://schema.org/InStock"{% else %}"https://schema.org/OutOfStock"{% endif %},
+          "itemCondition": "https://schema.org/NewCondition"
+        }{% unless forloop.last %},{% endunless %}
+        {% endfor %}
+      ]
+    }
+    {% if dpp_ref != blank %}
+    ,"additionalProperty": [
+      {% if dpp_ref.fields.co2_emission_kg != blank %}
+      {
+        "@type": "PropertyValue",
+        "name": "CO2Emission",
+        "value": {{ dpp_ref.fields.co2_emission_kg.value | json }},
+        "unitCode": "KGM"
+      },
+      {% endif %}
+      {% if dpp_ref.fields.recyclability != blank %}
+      {
+        "@type": "PropertyValue",
+        "name": "Recyclability",
+        "value": {{ dpp_ref.fields.recyclability.value | json }}
+      },
+      {% endif %}
+      {
+        "@type": "PropertyValue",
+        "name": "DigitalProductPassportId",
+        "value": {{ dpp_ref.fields.product_passport_id.value | default: '' | json }}
+      }
+    ]
+    {% endif %}
+  }
+  </script>
+{% endif %}

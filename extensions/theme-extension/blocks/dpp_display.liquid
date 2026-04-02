@@ -1,0 +1,50 @@
+{% comment %}
+  EcoSync: Digital Product Passport (DPP) を表示するブロック。
+  特定のプロダクトに対して紐付けられた `ecosync_dpp` データを表示します。
+  Theme App Extensions (TAE) 経由でノーコードで商品ページに配置可能です。
+{% endcomment %}
+
+{% assign dpp = product.metafields.ecosync.dpp.value %}
+
+<div class="ecosync-dpp-container" style="border: 1px solid {{ block.settings.border_color | default: '#cccccc' }}; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+  <h3 style="margin-top: 0; display: flex; align-items: center; gap: 8px;">
+    🌍 {{ block.settings.title | default: 'Digital Product Passport' }}
+  </h3>
+  
+  {% if dpp %}
+    <ul style="list-style: none; padding-left: 0; margin-bottom: 10px;">
+      <li style="margin-bottom: 4px;"><strong>Materials:</strong> {{ dpp.materials }}</li>
+      <li style="margin-bottom: 4px;"><strong>Carbon Footprint:</strong> {{ dpp.carbon_footprint }} kg CO2</li>
+      <li style="margin-bottom: 4px;"><strong>Recyclability:</strong> {{ dpp.recyclability_percentage }}%</li>
+    </ul>
+    <p style="font-size: 0.85em; color: #2e7d32; margin: 0; font-weight: bold;">
+      ✓ EU ESPR Compliant
+    </p>
+  {% else %}
+    <p style="color: #666; font-size: 0.9em; margin: 0;">
+      This product does not have a Digital Product Passport yet.
+    </p>
+  {% endif %}
+</div>
+
+{% schema %}
+{
+  "name": "DPP Display",
+  "target": "section",
+  "templates": ["product"],
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Block Title",
+      "default": "Digital Product Passport"
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "#cccccc"
+    }
+  ]
+}
+{% endschema %}
