@@ -2,7 +2,7 @@
 
 client_id = "ba734ca3236f8ad7837ce26dfc08886c"
 name = "EcoSync"
-application_url = "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app"
+application_url = "https://eco-sync-ljo-devs-projects.vercel.app"
 embedded = true
 
 [build]
@@ -28,4 +28,4 @@ api_version = "2026-04"
 scopes = "read_themes,write_themes,read_products,write_products,read_orders,write_orders,read_metaobjects,write_metaobjects,read_returns"
 
 [auth]
-redirect_urls = [ "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app/auth/callback", "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app/auth/shopify/callback", "https://eco-sync-8e99sdhtb-ljo-devs-projects.vercel.app/api/auth/callback" ]
+redirect_urls = [ "https://eco-sync-ljo-devs-projects.vercel.app/auth/callback", "https://eco-sync-ljo-devs-projects.vercel.app/auth/shopify/callback", "https://eco-sync-ljo-devs-projects.vercel.app/api/auth/callback" ]
