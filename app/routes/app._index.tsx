@@ -58,6 +58,29 @@ export default function Index() {
             <Card>
               <BlockStack gap="300">
                 <Text as="h2" variant="headingMd">
+                  📸 App Listing Asset Previews
+                </Text>
+                <Text as="p" variant="bodyMd">
+                  Click the buttons below to open the newly generated screens for taking screenshots.
+                </Text>
+                <InlineStack gap="300">
+                  <Button url="/app/diagnosis">Diagnosis Screen</Button>
+                  <Button url="/app/preview">AI Preview Screen</Button>
+                  <Button url="/app/dpp-demo">DPP Demo Screen</Button>
+                </InlineStack>
+                <InlineStack gap="300">
+                  <Button url="/app/mock-chatgpt">Mock ChatGPT</Button>
+                  <Button url="/app/mock-pagespeed">Mock PageSpeed</Button>
+                  <Button url="/app/mock-pricing">Mock Pricing</Button>
+                </InlineStack>
+              </BlockStack>
+            </Card>
+          </Layout.Section>
+          
+          <Layout.Section>
+            <Card>
+              <BlockStack gap="300">
+                <Text as="h2" variant="headingMd">
                   {t.dashboard.scannerTitle}
                 </Text>
                 <Text as="p" variant="bodyMd">

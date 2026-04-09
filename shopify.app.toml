@@ -23,17 +23,10 @@ api_version = "2026-04"
   topics = [ "refunds/create" ]
   uri = "/webhooks/returns"
 
-  [[webhooks.subscriptions]]
-  topics = [ "customers/data_request" ]
-  uri = "/webhooks/gdpr"
-
-  [[webhooks.subscriptions]]
-  topics = [ "customers/redact" ]
-  uri = "/webhooks/gdpr"
-
-  [[webhooks.subscriptions]]
-  topics = [ "shop/redact" ]
-  uri = "/webhooks/gdpr"
+[webhooks.privacy_compliance]
+customer_deletion_url = "/webhooks/gdpr"
+customer_data_request_url = "/webhooks/gdpr"
+shop_deletion_url = "/webhooks/gdpr"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
