@@ -32,8 +32,12 @@ export const action = async ({ request }: LoaderFunctionArgs) => {
     const results = await scanThemeForGhostCode(admin.graphql);
     return json({ success: true, results });
   } catch (error: any) {
+    if (error instanceof Response) {
+      // RemixやShopifyが認証リダイレクト等で投げるResponseは再スローする
+      throw error;
+    }
     handleAppError(error, "Ghost Code Scanner Action");
-    return json({ success: false, error: error.message }, { status: 500 });
+    return json({ success: false, error: error.message || String(error) }, { status: 500 });
   }
 };
 
