@@ -12,31 +12,58 @@ import {
   List,
   InlineStack,
   Badge,
+  Banner
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate } from "../shopify.server";
-import { scanThemeForGhostCode } from "../services/scanner.server";
 import { handleAppError } from "../lib/errorHandler.server";
 import { getTranslations } from "../lib/i18n.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
+  const { session } = await authenticate.admin(request);
   const t = getTranslations(request);
-  return json({ t });
+  return json({ t, shop: session.shop });
 };
 
 export const action = async ({ request }: LoaderFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
+  const { admin, session } = await authenticate.admin(request);
+  const formData = await request.formData();
+  const intent = formData.get("intent");
   
   try {
-    const results = await scanThemeForGhostCode(admin.graphql);
-    return json({ success: true, results });
-  } catch (error: any) {
-    if (error instanceof Response) {
-      // RemixやShopifyが認証リダイレクト等で投げるResponseは再スローする
-      throw error;
+    if (intent === "scan") {
+      const { processGhostCodePipeline } = await import("../services/scanner.server");
+      const results = await processGhostCodePipeline(admin.graphql, session.shop);
+      return json({ success: true, intent, results });
     }
-    handleAppError(error, "Ghost Code Scanner Action");
+
+    if (intent === "apply") {
+      const workThemeId = formData.get("workThemeId") as string;
+      if (!workThemeId) throw new Error("No Work Theme ID provided.");
+      
+      const publishRes = await admin.graphql(`
+        #graphql
+        mutation publishTheme($id: ID!) {
+          themePublish(id: $id) {
+            theme { id role }
+            userErrors { message }
+          }
+        }
+      `, { variables: { id: workThemeId } });
+
+      const pubData = await publishRes.json();
+      const errors = pubData.data?.themePublish?.userErrors;
+      if (errors && errors.length > 0) {
+        throw new Error(`Failed to publish theme: ${errors[0].message}`);
+      }
+
+      return json({ success: true, intent, message: "Successfully applied AST-deleted Workspace Theme to Live Store!" });
+    }
+
+    return json({ success: false, error: "Invalid intent" }, { status: 400 });
+  } catch (error: any) {
+    if (error instanceof Response) throw error;
+    handleAppError(error, `Ghost Code Scanner Action [${intent}]`);
     return json({ success: false, error: error.message || String(error) }, { status: 500 });
   }
 };
@@ -45,20 +72,65 @@ export default function Index() {
   const nav = useNavigation();
   const submit = useSubmit();
   const actionData = useActionData<typeof action>();
-  const { t } = useLoaderData<typeof loader>();
+  const { t, shop } = useLoaderData<typeof loader>();
 
-  const isScanning = nav.state === "submitting" || nav.state === "loading";
+  const isScanning = nav.state === "submitting" && nav.formData?.get("intent") === "scan";
+  const isApplying = nav.state === "submitting" && nav.formData?.get("intent") === "apply";
 
   const handleScan = () => {
-    submit({}, { replace: true, method: "POST" });
+    const formData = new FormData();
+    formData.append("intent", "scan");
+    submit(formData, { replace: true, method: "POST" });
+  };
+
+  const handleApply = (workThemeId: string) => {
+    const formData = new FormData();
+    formData.append("intent", "apply");
+    formData.append("workThemeId", workThemeId);
+    submit(formData, { replace: true, method: "POST" });
   };
 
   return (
     <Page>
       <TitleBar title={t.dashboard.title} />
       <BlockStack gap="500">
-        <Layout>
+        
+        {/* Success Banner after Apply */}
+        {actionData?.success && actionData.intent === "apply" && (
+          <Banner tone="success" title="Publication Successful">
+            <p>{actionData.message}</p>
+          </Banner>
+        )}
 
+        {/* Human-in-the-Loop Diff Viewer */}
+        {actionData?.success && actionData.intent === "scan" && actionData.results?.scanFoundIssues && (
+          <Banner tone="warning" title="Pending Review: Smoke Test Passed on Workspace Theme" action={{ content: 'Apply to Live Theme', onClick: () => handleApply(actionData.results.workThemeId), loading: isApplying }}>
+            <BlockStack gap="300">
+              <p>EcoSync detected ghost code, created an isolated Workspace Theme, and performed safe AST Soft-Deletions. The automated Smoke Test verified no pages crashed.</p>
+              
+              <InlineStack gap="300">
+                <Button target="_blank" url={`https://${shop}?preview_theme_id=${actionData.results.workThemeId}`}>
+                  View Live Preview URL (Work Theme)
+                </Button>
+              </InlineStack>
+
+              <Text as="h3" variant="headingSm">Affected Files (Diff summary):</Text>
+              <List type="bullet">
+                {actionData.results.filesModified.map((f: any, i: number) => (
+                  <List.Item key={i}>
+                    <strong>{f.fileName}</strong>: Wrapped {f.deletedNodeCount} nodes in EcoSync Soft-Delete comments.
+                    <br />
+                    <span style={{ color: "#d22d2d" }}>Patterns detected: {f.foundGhosts.join(", ")}</span>
+                  </List.Item>
+                ))}
+              </List>
+              
+              <p>Click <strong>Apply to Live Theme</strong> to formally replace your live store with this structurally cleaned Work Theme.</p>
+            </BlockStack>
+          </Banner>
+        )}
+
+        <Layout>
           <Layout.Section>
             <Card>
               <BlockStack gap="300">
@@ -71,39 +143,21 @@ export default function Index() {
 
                 <InlineStack gap="300">
                   <Button loading={isScanning} onClick={handleScan} variant="primary">
-                    {t.dashboard.scanButton}
+                    Start Safe Validation Scan
                   </Button>
                 </InlineStack>
 
                 {actionData && (
                   <Box paddingBlockStart="400">
-                    {actionData.success ? (
-                      actionData.results && actionData.results.length > 0 ? (
-                        <BlockStack gap="200">
-                          <Text as="h3" variant="headingSm" tone="critical">
-                            {t.dashboard.scanFound} ({actionData.results.length} {t.dashboard.files})
-                          </Text>
-                          <List type="bullet">
-                            {actionData.results.map((r: any, i: number) => (
-                              <List.Item key={i}>
-                                <Text as="strong">{r.fileName} : </Text>
-                                <InlineStack gap="200">
-                                  {r.foundGhosts.map((g: string, j: number) => (
-                                    <Badge key={j} tone="warning">{g}</Badge>
-                                  ))}
-                                </InlineStack>
-                              </List.Item>
-                            ))}
-                          </List>
-                        </BlockStack>
-                      ) : (
+                    {actionData.success && actionData.intent === "scan" && !actionData.results?.scanFoundIssues && (
                         <Text as="p" variant="bodyMd" tone="success">
                           {t.dashboard.scanClean}
                         </Text>
-                      )
-                    ) : (
+                    )}
+                    
+                    {!actionData.success && (
                       <Text as="p" variant="bodyMd" tone="critical">
-                        {t.dashboard.scanError}{actionData.error}
+                        Pipeline Error: {actionData.error}
                       </Text>
                     )}
                   </Box>
